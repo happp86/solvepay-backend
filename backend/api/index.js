@@ -1,11 +1,11 @@
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
-import { AppModule } from '../src/app.module';
-import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
+const { NestFactory } = require('@nestjs/core');
+const { ValidationPipe } = require('@nestjs/common');
+const { AppModule } = require('../dist/app.module');
+const { AllExceptionsFilter } = require('../dist/common/filters/all-exceptions.filter');
 
 let app;
 
-export default async function handler(req: any, res: any) {
+module.exports = async (req, res) => {
   if (!app) {
     app = await NestFactory.create(AppModule);
     
@@ -29,4 +29,4 @@ export default async function handler(req: any, res: any) {
   
   const expressApp = app.getHttpAdapter().getInstance();
   return expressApp(req, res);
-}
+};
