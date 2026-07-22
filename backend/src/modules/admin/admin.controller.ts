@@ -95,6 +95,16 @@ export class AdminController {
     return this.adminService.adjustWalletBalance(id, body.amount, body.reason);
   }
 
+  // ─── Delete User Permanently ────────────────────────────────────────────────
+  @Put('users/:id/delete')
+  async deleteUser(
+    @Headers('authorization') auth: string,
+    @Param('id') id: string,
+  ) {
+    verifyAdminToken(auth, this.jwtService, this.configService);
+    return this.adminService.deleteUserPermanently(id);
+  }
+
   // ─── All Orders ──────────────────────────────────────────────────────────────
   @Get('orders')
   async getAllOrders(

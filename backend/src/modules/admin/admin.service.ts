@@ -129,6 +129,20 @@ export class AdminService {
     return { success: true, newBalance };
   }
 
+  async deleteUserPermanently(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    // Delete associated data in order
+    await this.prisma.transaction.deleteMany({ where: { userId } });
+    await this.prisma.order.deleteMany({ where: { userId } });
+    await this.prisma.taskLog.deleteMany({ where: { userId } });
+    await this.prisma.wallet.deleteMany({ where: { userId } });
+    await this.prisma.user.delete({ where: { id: userId } });
+
+    return { success: true, message: `User ${user.username || user.appId} deleted permanently.` };
+  }
+
   async getAllOrders(page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
     const [orders, total] = await Promise.all([
