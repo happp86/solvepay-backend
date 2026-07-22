@@ -93,9 +93,22 @@ export class AdminService {
       where: { id },
       include: {
         wallet: true,
-        orders: { orderBy: { createdAt: 'desc' }, take: 20 },
-        transactions: { orderBy: { createdAt: 'desc' }, take: 20 },
-        givenReferrals: true,
+        orders: { orderBy: { createdAt: 'desc' } },
+        transactions: { orderBy: { createdAt: 'desc' } },
+        givenReferrals: {
+          include: {
+            referredUser: {
+              select: { id: true, username: true, phone: true, appId: true, createdAt: true },
+            },
+          },
+        },
+        receivedReferral: {
+          include: {
+            referrer: {
+              select: { id: true, username: true, phone: true, appId: true },
+            },
+          },
+        },
       },
     });
     if (!user) throw new NotFoundException('User not found');
@@ -136,8 +149,19 @@ export class AdminService {
 
     // Delete associated data in order
     await this.prisma.transaction.deleteMany({ where: { userId } });
-    await this.prisma.order.deleteMany({ where: { userId } });
-    await this.prisma.taskLog.deleteMany({ where: { userId } });
+    await this.prisma.refreshToken.deleteMany({ where: { userId } });
+    await this.prisma.referral.deleteMany({
+      where: {
+        OR: [
+          { referrerId: userId },
+          { referredUserId: userId },
+        ],
+      },
+    });
+    await this.prisma.order.updateMany({
+      where: { userId },
+      data: { userId: null },
+    });
     await this.prisma.wallet.deleteMany({ where: { userId } });
     await this.prisma.user.delete({ where: { id: userId } });
 
