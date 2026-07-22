@@ -1,0 +1,40 @@
+import { VirtualCard } from '../types/data';
+
+export const mockCards: VirtualCard[] = [
+  {
+    id: 'card_7719',
+    cardNumber: '4242 •••• •••• 8819',
+    cardHolder: 'ALEXANDER WRIGHT',
+    expiryDate: '08/29',
+    cvv: '921',
+    cardType: 'Visa',
+    tier: 'Platinum',
+    bgGradient: ['#18C964', '#0F172A'],
+    isFrozen: false,
+    balance: 14250.00,
+  },
+  {
+    id: 'card_8810',
+    cardNumber: '5412 •••• •••• 3310',
+    cardHolder: 'SOLVE DIGITAL LLC',
+    expiryDate: '11/28',
+    cvv: '404',
+    cardType: 'Mastercard',
+    tier: 'Black',
+    bgGradient: ['#1E293B', '#0F172A'],
+    isFrozen: false,
+    balance: 10600.50,
+  },
+  {
+    id: 'card_3309',
+    cardNumber: '4012 •••• •••• 9901',
+    cardHolder: 'ALEXANDER WRIGHT',
+    expiryDate: '04/27',
+    cvv: '182',
+    cardType: 'Visa',
+    tier: 'Gold',
+    bgGradient: ['#F59E0B', '#D97706'],
+    isFrozen: true,
+    balance: 0.00,
+  },
+];

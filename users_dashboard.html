@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SolvePay - Admin User Viewer</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+      margin: 0;
+      padding: 30px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    h1 {
+      color: #18C964;
+      margin: 0;
+    }
+    .card {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+    }
+    th, td {
+      padding: 14px 18px;
+      text-align: left;
+      border-bottom: 1px solid #334155;
+    }
+    th {
+      background-color: #0f172a;
+      color: #94a3b8;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 1px;
+    }
+    tr:hover {
+      background-color: #334155;
+    }
+    .badge-id {
+      background: rgba(24, 201, 100, 0.15);
+      color: #18C964;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: bold;
+      border: 1px solid #18C964;
+    }
+    .balance {
+      font-weight: bold;
+      color: #38bdf8;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>⚡ SolvePay Admin User Viewer</h1>
+    <button onclick="location.reload()" style="background:#18C964; color:#fff; border:none; padding:10px 18px; border-radius:8px; cursor:pointer; font-weight:bold;">Refresh Users</button>
+  </div>
+  <div class="card">
+    <p>Below are all users registered in your PostgreSQL database with their unique 6-Digit App IDs:</p>
+    <table>
+      <thead>
+        <tr>
+          <th>6-Digit App ID</th>
+          <th>Username</th>
+          <th>Phone Number</th>
+          <th>Referral Code</th>
+          <th>Wallet Balance</th>
+        </tr>
+      </thead>
+      <tbody id="userTable">
+        <tr>
+          <td><span class="badge-id">100001</span></td>
+          <td>king</td>
+          <td>7898370402</td>
+          <td>SPQPIH4Q</td>
+          <td class="balance">₹0.00</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
