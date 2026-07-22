@@ -18,6 +18,7 @@ export class AdminService {
     }
     const token = this.jwtService.sign({ role: 'admin' }, {
       secret: this.configService.get<string>('ADMIN_JWT_SECRET', 'solvepay_admin_super_secret_2026'),
+      expiresIn: '7d',
     });
     return { token };
   }
