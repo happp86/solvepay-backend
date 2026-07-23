@@ -21,7 +21,7 @@ export class OrderService {
 
     for (let i = 0; i < seedData.length; i++) {
       const item = seedData[i];
-      const commissionRate = 3.5;
+      const commissionRate = 4.0;
       const estimatedEarnings = (item.amount * commissionRate) / 100;
       const orderNumber = `ORD${Date.now()}${i + 1}`;
 
@@ -136,7 +136,7 @@ export class OrderService {
           type: TransactionType.ORDER_COMMISSION,
           amount: totalCredit,
           title: `Order #${order.orderNumber} Completed`,
-          description: `Order Amount ₹${order.amount} + 3.5% Commission (₹${commissionEarnings}) credited to wallet`,
+          description: `Order Amount ₹${order.amount} + 4.0% Commission (₹${commissionEarnings}) credited to wallet`,
           status: TransactionStatus.SUCCESS,
         },
       });

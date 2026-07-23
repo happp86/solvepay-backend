@@ -106,7 +106,7 @@ model Order {
   id                   String      @id @default(uuid())
   orderNumber          String      @unique @map("order_number")
   amount               Decimal     @db.Decimal(18, 2)
-  commissionRate       Decimal     @default(3.50) @map("commission_rate") @db.Decimal(5, 2)
+  commissionRate       Decimal     @default(4.00) @map("commission_rate") @db.Decimal(5, 2)
   estimatedEarnings    Decimal     @map("estimated_earnings") @db.Decimal(18, 2)
   timeRemainingSeconds Int         @default(300) @map("time_remaining_seconds")
   status               OrderStatus @default(AVAILABLE)
