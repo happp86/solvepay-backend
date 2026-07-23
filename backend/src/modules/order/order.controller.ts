@@ -50,4 +50,11 @@ export class OrderController {
     const userId = req.user.id || req.user.sub;
     return this.orderService.completeOrder(userId, orderId);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/cancel')
+  async cancelOrder(@Req() req: any, @Param('id') orderId: string) {
+    const userId = req.user.id || req.user.sub;
+    return this.orderService.cancelOrder(userId, orderId);
+  }
 }

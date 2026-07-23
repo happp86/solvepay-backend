@@ -81,10 +81,55 @@ export class AuthService {
         tx,
       );
 
-      await this.walletRepository.createWallet(createdUser.id, 'INR', tx);
+      let newBonus = 0;
 
       if (referrerId) {
         await this.userRepository.createReferralLink(referrerId, createdUser.id, tx);
+
+        // Credit ₹50 to Referrer automatically
+        const referrerWallet = await tx.wallet.findUnique({ where: { userId: referrerId } });
+        if (referrerWallet) {
+          await tx.wallet.update({
+            where: { id: referrerWallet.id },
+            data: { balance: { increment: 50 } },
+          });
+          await tx.transaction.create({
+            data: {
+              walletId: referrerWallet.id,
+              userId: referrerId,
+              type: 'REWARD',
+              amount: 50,
+              title: 'Referral Bonus',
+              description: `Referral reward of ₹50 for inviting ${createdUser.username || createdUser.phone}`,
+              status: 'SUCCESS',
+            },
+          });
+        }
+
+        // ₹75 Welcome Bonus for New User
+        newBonus = 75;
+      }
+
+      const wallet = await tx.wallet.create({
+        data: {
+          userId: createdUser.id,
+          balance: newBonus,
+          currency: 'INR',
+        },
+      });
+
+      if (newBonus > 0) {
+        await tx.transaction.create({
+          data: {
+            walletId: wallet.id,
+            userId: createdUser.id,
+            type: 'REWARD',
+            amount: 75,
+            title: 'Welcome Referral Bonus',
+            description: 'Welcome bonus of ₹75 for joining via referral code',
+            status: 'SUCCESS',
+          },
+        });
       }
 
       return createdUser;

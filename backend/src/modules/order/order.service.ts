@@ -183,4 +183,21 @@ export class OrderService {
       };
     });
   }
+
+  async cancelOrder(userId: string, orderId: string) {
+    const order = await this.prisma.order.findFirst({
+      where: {
+        OR: [{ id: orderId }, { orderNumber: orderId }],
+      },
+    });
+
+    if (order) {
+      await this.prisma.order.update({
+        where: { id: order.id },
+        data: { status: OrderStatus.CANCELLED },
+      });
+    }
+
+    return { success: true, message: 'Order cancelled permanently.' };
+  }
 }
