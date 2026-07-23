@@ -49,7 +49,41 @@ export class OrderService {
   async getUserOrders(userId: string) {
     return this.prisma.order.findMany({
       where: { userId },
-      orderBy: { updatedAt: 'desc' },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async submitUtrOrder(
+    userId: string,
+    data: {
+      amount: number;
+      utrNumber: string;
+      voucherUrl?: string;
+      payoutWallet?: string;
+      payoutAccount?: string;
+      payoutUpi?: string;
+      orderNo?: string;
+    },
+  ) {
+    const commissionRate = 4.0;
+    const estimatedEarnings = (data.amount * commissionRate) / 100;
+    const orderNumber = data.orderNo || `R${Date.now()}${Math.floor(Math.random() * 1000)}`;
+
+    return this.prisma.order.create({
+      data: {
+        orderNumber,
+        amount: data.amount,
+        commissionRate,
+        estimatedEarnings,
+        status: OrderStatus.IN_PROGRESS,
+        userId,
+        utrNumber: data.utrNumber,
+        voucherUrl: data.voucherUrl || '',
+        payoutWallet: data.payoutWallet || 'Freecharge',
+        payoutAccount: data.payoutAccount || '',
+        payoutUpi: data.payoutUpi || '',
+        grabbedAt: new Date(),
+      },
     });
   }
 

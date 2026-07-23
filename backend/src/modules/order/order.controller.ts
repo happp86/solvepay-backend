@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, UseGuards, Req } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
@@ -16,6 +16,25 @@ export class OrderController {
   async getUserOrders(@Req() req: any) {
     const userId = req.user.id || req.user.sub;
     return this.orderService.getUserOrders(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('submit-utr')
+  async submitUtr(
+    @Req() req: any,
+    @Body()
+    body: {
+      amount: number;
+      utrNumber: string;
+      voucherUrl?: string;
+      payoutWallet?: string;
+      payoutAccount?: string;
+      payoutUpi?: string;
+      orderNo?: string;
+    },
+  ) {
+    const userId = req.user.id || req.user.sub;
+    return this.orderService.submitUtrOrder(userId, body);
   }
 
   @UseGuards(JwtAuthGuard)

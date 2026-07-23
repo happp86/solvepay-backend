@@ -115,6 +115,17 @@ export class AdminController {
     return this.adminService.getAllOrders(Number(page));
   }
 
+  // ─── Update Order Status ────────────────────────────────────────────────────
+  @Put('orders/:id/status')
+  async updateOrderStatus(
+    @Headers('authorization') auth: string,
+    @Param('id') id: string,
+    @Body() body: { status: 'COMPLETED' | 'CANCELLED' | 'IN_PROGRESS' },
+  ) {
+    verifyAdminToken(auth, this.jwtService, this.configService);
+    return this.adminService.updateOrderStatus(id, body.status);
+  }
+
   // ─── All Transactions ────────────────────────────────────────────────────────
   @Get('transactions')
   async getAllTransactions(

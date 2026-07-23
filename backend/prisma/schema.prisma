@@ -114,6 +114,12 @@ model Order {
   userId               String?     @map("user_id")
   user                 User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
 
+  utrNumber            String?     @map("utr_number")
+  voucherUrl           String?     @map("voucher_url")
+  payoutWallet         String?     @map("payout_wallet")
+  payoutAccount        String?     @map("payout_account")
+  payoutUpi            String?     @map("payout_upi")
+
   grabbedAt            DateTime?   @map("grabbed_at")
   completedAt          DateTime?   @map("completed_at")
   createdAt            DateTime    @default(now()) @map("created_at")

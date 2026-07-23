@@ -182,6 +182,47 @@ export class AdminService {
     return { orders, total, page, totalPages: Math.ceil(total / limit) };
   }
 
+  async updateOrderStatus(orderId: string, status: 'COMPLETED' | 'CANCELLED' | 'IN_PROGRESS') {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) throw new NotFoundException('Order not found');
+
+    if (status === 'COMPLETED' && order.status !== 'COMPLETED' && order.userId) {
+      const commissionEarnings = Number(order.estimatedEarnings);
+      const totalCredit = Number(order.amount) + commissionEarnings;
+
+      const wallet = await this.prisma.wallet.findUnique({ where: { userId: order.userId } });
+      if (wallet) {
+        await this.prisma.wallet.update({
+          where: { id: wallet.id },
+          data: { balance: { increment: totalCredit } },
+        });
+
+        await this.prisma.transaction.create({
+          data: {
+            walletId: wallet.id,
+            userId: order.userId,
+            orderId: order.id,
+            type: 'ORDER_COMMISSION',
+            amount: totalCredit,
+            title: `Order #${order.orderNumber} Approved`,
+            description: `Order Amount ₹${order.amount} + 4% Commission (₹${commissionEarnings}) approved by Admin`,
+            status: 'SUCCESS',
+          },
+        });
+      }
+    }
+
+    const updated = await this.prisma.order.update({
+      where: { id: orderId },
+      data: {
+        status: status as any,
+        completedAt: status === 'COMPLETED' ? new Date() : undefined,
+      },
+    });
+
+    return { success: true, order: updated };
+  }
+
   async getAllTransactions(page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
     const [transactions, total] = await Promise.all([
