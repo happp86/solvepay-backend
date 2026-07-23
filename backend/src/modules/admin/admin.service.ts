@@ -89,8 +89,14 @@ export class AdminService {
   }
 
   async getUserById(id: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id },
+    const user = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { id },
+          { appId: id },
+          { phone: id },
+        ],
+      },
       include: {
         wallet: true,
         orders: { orderBy: { createdAt: 'desc' } },
