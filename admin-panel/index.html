@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SolvePay Admin Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d2e;
+      --card: #242840;
+      --accent: #4f8ef7;
+      --accent2: #00d4aa;
+      --danger: #ff4757;
+      --warning: #ffa502;
+      --text: #e8eaf0;
+      --muted: #8892a4;
+      --border: #2d3152;
+      --success: #2ed573;
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    
+    /* LOGIN */
+    #loginPage {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 20px;
+    }
+    .login-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 48px 40px; width: 100%; max-width: 420px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .logo { text-align: center; margin-bottom: 32px; }
+    .logo h1 { font-size: 28px; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .logo p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+    
+    /* ADMIN LAYOUT */
+    #adminPage { display: none; }
+    .sidebar {
+      position: fixed; left: 0; top: 0; bottom: 0; width: 240px;
+      background: var(--surface); border-right: 1px solid var(--border);
+      padding: 24px 16px; display: flex; flex-direction: column; gap: 4px; z-index: 100;
+      overflow-y: auto;
+    }
+    .sidebar-logo { font-size: 20px; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; padding: 0 12px 20px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+      border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 500;
+      color: var(--muted); transition: all 0.2s; border: none; background: none; width: 100%; text-align: left;
+    }
+    .nav-item:hover, .nav-item.active { background: rgba(79,142,247,0.15); color: var(--accent); }
+    .main-content { margin-left: 240px; padding: 32px; min-height: 100vh; }
+    
+    /* CARDS */
+    .page-header { margin-bottom: 28px; }
+    .page-header h2 { font-size: 24px; font-weight: 700; }
+    .page-header p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+    .stat-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 20px; position: relative; overflow: hidden;
+    }
+    .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent); }
+    .stat-card.green::before { background: var(--accent2); }
+    .stat-card.orange::before { background: var(--warning); }
+    .stat-card.red::before { background: var(--danger); }
+    .stat-label { font-size: 12px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-value { font-size: 28px; font-weight: 700; margin-top: 6px; }
+    
+    /* TABLE */
+    .table-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+    .table-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid var(--border); }
+    .table-header h3 { font-size: 16px; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: rgba(255,255,255,0.03); padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+    td { padding: 14px 16px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    
+    /* BUTTONS & INPUTS */
+    .btn { padding: 10px 18px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif; }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), #3a7bd5); color: white; }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-danger { background: var(--danger); color: white; font-size: 12px; padding: 6px 12px; }
+    .btn-success { background: var(--success); color: #0f1117; font-size: 12px; padding: 6px 12px; }
+    .btn-sm { font-size: 12px; padding: 6px 14px; }
+    input, textarea {
+      width: 100%; padding: 12px 16px; background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border); border-radius: 10px; color: var(--text);
+      font-size: 14px; font-family: 'Inter', sans-serif; transition: border 0.2s;
+    }
+    input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
+    
+    /* BADGE */
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .badge-success { background: rgba(46,213,115,0.15); color: var(--success); }
+    .badge-warning { background: rgba(255,165,2,0.15); color: var(--warning); }
+    .badge-danger { background: rgba(255,71,87,0.15); color: var(--danger); }
+    .badge-info { background: rgba(79,142,247,0.15); color: var(--accent); }
+    
+    /* MODAL */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; max-width: 480px; width: 90%; }
+    .modal h3 { margin-bottom: 20px; font-size: 18px; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    
+    /* SEARCH */
+    .search-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+    .search-bar input { max-width: 340px; }
+    
+    /* PAGINATION */
+    .pagination { display: flex; gap: 8px; margin-top: 16px; align-items: center; justify-content: center; padding: 16px; }
+    .pag-btn { padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); cursor: pointer; font-size: 13px; }
+    .pag-btn.active { background: var(--accent); border-color: var(--accent); }
+    .pag-btn:disabled { opacity: 0.4; cursor: default; }
+    
+    /* ALERT */
+    .alert { padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; font-size: 14px; display: none; }
+    .alert.show { display: block; }
+    .alert-error { background: rgba(255,71,87,0.15); border: 1px solid rgba(255,71,87,0.3); color: #ff6b7a; }
+    .alert-success { background: rgba(46,213,115,0.15); border: 1px solid rgba(46,213,115,0.3); color: var(--success); }
+    
+    /* SPINNER */
+    .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading { display: flex; align-items: center; justify-content: center; padding: 60px; gap: 12px; color: var(--muted); }
+    
+    /* USER DETAIL */
+    .user-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .detail-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+    .detail-label { font-size: 11px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
+    .detail-value { font-size: 15px; font-weight: 600; word-break: break-all; }
+    
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+      .sidebar.open { transform: none; }
+      .main-content { margin-left: 0; padding: 16px; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .hamburger { display: block !important; }
+      .user-detail-grid { grid-template-columns: 1fr; }
+    }
+    .hamburger { display: none; position: fixed; top: 16px; left: 16px; z-index: 200; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px; cursor: pointer; }
+    
+    .pages > div { display: none; }
+    .pages > div.active-page { display: block; }
+    
+    #logoutBtn { margin-top: auto; color: var(--danger); }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage">
+  <div class="login-card">
+    <div class="logo">
+      <h1>⚡ SolvePay</h1>
+      <p>Admin Panel</p>
+    </div>
+    <div id="loginAlert" class="alert alert-error"></div>
+    <div class="form-group">
+      <label>Admin Password</label>
+      <input type="password" id="adminPassword" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn btn-primary" style="width:100%" onclick="doLogin()" id="loginBtn">Login to Admin Panel</button>
+  </div>
+</div>
+
+<!-- HAMBURGER (mobile) -->
+<button class="hamburger" onclick="toggleSidebar()">☰</button>
+
+<!-- ADMIN PAGE -->
+<div id="adminPage">
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-logo">⚡ SolvePay Admin</div>
+    <button class="nav-item active" onclick="showPage('dashboard', this)">📊 Dashboard</button>
+    <button class="nav-item" onclick="showPage('users', this)">👥 All Users</button>
+    <button class="nav-item" onclick="showPage('search', this)">🔍 Search User</button>
+    <button class="nav-item" onclick="showPage('orders', this)">📦 Orders</button>
+    <button class="nav-item" onclick="showPage('transactions', this)">💰 Transactions</button>
+    <button class="nav-item" id="logoutBtn" onclick="doLogout()">🚪 Logout</button>
+  </div>
+
+  <div class="main-content">
+    <div class="pages">
+      <!-- DASHBOARD -->
+      <div id="page-dashboard" class="active-page">
+        <div class="page-header">
+          <h2>Dashboard</h2>
+          <p>Welcome back, Admin! Here's your overview.</p>
+        </div>
+        <div class="stats-grid" id="statsGrid">
+          <div class="loading"><div class="spinner"></div> Loading...</div>
+        </div>
+        <div class="table-card" style="margin-top:0">
+          <div class="table-header"><h3>🆕 Recent Users</h3></div>
+          <div id="recentUsersTable"><div class="loading"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+
+      <!-- USERS -->
+      <div id="page-users">
+        <div class="page-header">
+          <h2>All Users</h2>
+          <p>Manage all registered users</p>
+        </div>
+        <div class="search-bar">
+          <input id="userSearchInput" type="text" placeholder="Search by name, phone or App ID..." onkeydown="if(event.key==='Enter')searchUsers()">
+          <button class="btn btn-primary" onclick="searchUsers()">Search</button>
+          <button class="btn" style="background:var(--card);border:1px solid var(--border)" onclick="loadUsers(1)">Reset</button>
+        </div>
+        <div class="table-card">
+          <div id="usersTable"><div class="loading"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+
+      <!-- SEARCH -->
+      <div id="page-search">
+        <div class="page-header">
+          <h2>🔍 Search by App ID</h2>
+          <p>Find any user using their App ID</p>
+        </div>
+        <div class="search-bar">
+          <input id="appIdInput" type="text" placeholder="Enter App ID (e.g. SP-XXXX-XXXX)">
+          <button class="btn btn-primary" onclick="searchByAppId()">Find User</button>
+        </div>
+        <div id="searchResult"></div>
+      </div>
+
+      <!-- ORDERS -->
+      <div id="page-orders">
+        <div class="page-header"><h2>Orders</h2><p>All orders in the system</p></div>
+        <div class="table-card">
+          <div id="ordersTable"><div class="loading"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+
+      <!-- TRANSACTIONS -->
+      <div id="page-transactions">
+        <div class="page-header"><h2>Transactions</h2><p>All financial transactions</p></div>
+        <div class="table-card">
+          <div id="transactionsTable"><div class="loading"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WALLET MODAL -->
+<div class="modal-overlay" id="walletModal">
+  <div class="modal">
+    <h3>💰 Adjust Wallet Balance</h3>
+    <div id="walletModalInfo" style="color:var(--muted);font-size:13px;margin-bottom:16px;"></div>
+    <div class="form-group">
+      <label>Amount (use negative to deduct)</label>
+      <input type="number" id="walletAmount" placeholder="e.g. 100 or -50">
+    </div>
+    <div class="form-group">
+      <label>Reason</label>
+      <input type="text" id="walletReason" placeholder="Reason for adjustment">
+    </div>
+    <div id="walletAlert" class="alert"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="submitWalletAdjust()">Confirm</button>
+      <button class="btn" style="background:var(--card);border:1px solid var(--border)" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = 'https://solvepay-backend.vercel.app';
+  let adminToken = localStorage.getItem('adminToken') || '';
+  let currentWalletUserId = '';
+  let currentUsersPage = 1;
+
+  // ── AUTH ─────────────────────────────────────────────────────────────────────
+  async function doLogin() {
+    const password = document.getElementById('adminPassword').value;
+    if (!password) return;
+    const btn = document.getElementById('loginBtn');
+    btn.innerHTML = '<div class="spinner"></div>';
+    btn.disabled = true;
+    try {
+      const res = await fetch(`${API}/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json();
+      if (data.token) {
+        adminToken = data.token;
+        localStorage.setItem('adminToken', adminToken);
+        showAdmin();
+      } else {
+        showAlert('loginAlert', 'Wrong password! Try again.', 'error');
+      }
+    } catch(e) {
+      showAlert('loginAlert', 'Cannot connect to server. Check your internet.', 'error');
+    }
+    btn.innerHTML = 'Login to Admin Panel';
+    btn.disabled = false;
+  }
+
+  function doLogout() {
+    adminToken = '';
+    localStorage.removeItem('adminToken');
+    document.getElementById('adminPage').style.display = 'none';
+    document.getElementById('loginPage').style.display = 'flex';
+  }
+
+  function showAdmin() {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('adminPage').style.display = 'block';
+    loadDashboard();
+  }
+
+  // ── NAV ───────────────────────────────────────────────────────────────────────
+  function showPage(name, btn) {
+    document.querySelectorAll('.pages > div').forEach(p => p.classList.remove('active-page'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active-page');
+    btn.classList.add('active');
+    if (name === 'users') loadUsers(1);
+    if (name === 'orders') loadOrders(1);
+    if (name === 'transactions') loadTransactions(1);
+    if (window.innerWidth < 768) document.getElementById('sidebar').classList.remove('open');
+  }
+
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+  }
+
+  // ── API ───────────────────────────────────────────────────────────────────────
+  async function api(path) {
+    const res = await fetch(`${API}${path}`, { headers: { Authorization: `Bearer ${adminToken}` } });
+    if (res.status === 401) { doLogout(); return null; }
+    return res.json();
+  }
+
+  async function apiPost(path, body, method = 'PUT') {
+    const res = await fetch(`${API}${path}`, {
+      method,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify(body),
+    });
+    return res.json();
+  }
+
+  // ── DASHBOARD ─────────────────────────────────────────────────────────────────
+  async function loadDashboard() {
+    const data = await api('/admin/dashboard');
+    if (!data) return;
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat-card">
+        <div class="stat-label">Total Users</div>
+        <div class="stat-value">${data.totalUsers}</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Total Orders</div>
+        <div class="stat-value">${data.totalOrders}</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-label">Transactions</div>
+        <div class="stat-value">${data.totalTransactions}</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-label">Total Wallet Balance</div>
+        <div class="stat-value">₹${parseFloat(data.totalWalletBalance || 0).toFixed(2)}</div>
+      </div>
+    `;
+    document.getElementById('recentUsersTable').innerHTML = renderUsersTable(data.recentUsers, false);
+  }
+
+  // ── USERS ─────────────────────────────────────────────────────────────────────
+  async function loadUsers(page = 1) {
+    currentUsersPage = page;
+    document.getElementById('usersTable').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    const data = await api(`/admin/users?page=${page}&limit=20`);
+    if (!data) return;
+    document.getElementById('usersTable').innerHTML =
+      renderUsersTable(data.users, true) + renderPagination(data.page, data.totalPages, 'loadUsers');
+  }
+
+  async function searchUsers() {
+    const q = document.getElementById('userSearchInput').value;
+    document.getElementById('usersTable').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    const data = await api(`/admin/users?search=${encodeURIComponent(q)}`);
+    if (!data) return;
+    document.getElementById('usersTable').innerHTML = renderUsersTable(data.users, true);
+  }
+
+  function renderUsersTable(users, showActions) {
+    if (!users || !users.length) return '<div class="loading">No users found</div>';
+    return `<table>
+      <thead><tr>
+        <th>Username</th><th>Phone</th><th>App ID</th>
+        <th>Balance</th><th>Joined</th>${showActions ? '<th>Actions</th>' : ''}
+      </tr></thead>
+      <tbody>${users.map(u => `
+        <tr>
+          <td><strong>${u.username}</strong></td>
+          <td>${u.phone}</td>
+          <td><span class="badge badge-info">${u.appId}</span></td>
+          <td><strong>₹${u.wallet ? parseFloat(u.wallet.balance).toFixed(2) : '0.00'}</strong></td>
+          <td>${new Date(u.createdAt).toLocaleDateString('en-IN')}</td>
+          ${showActions ? `<td>
+            <button class="btn btn-success btn-sm" onclick="openWalletModal('${u.id}','${u.username}',${u.wallet ? parseFloat(u.wallet.balance).toFixed(2) : 0})">💰 Wallet</button>
+          </td>` : ''}
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  // ── SEARCH BY APP ID ──────────────────────────────────────────────────────────
+  async function searchByAppId() {
+    const appId = document.getElementById('appIdInput').value.trim();
+    if (!appId) return;
+    document.getElementById('searchResult').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    const data = await api(`/admin/users/appid/${encodeURIComponent(appId)}`);
+    if (!data || data.statusCode === 404) {
+      document.getElementById('searchResult').innerHTML = '<div class="alert alert-error show">User not found with this App ID</div>';
+      return;
+    }
+    document.getElementById('searchResult').innerHTML = `
+      <div class="table-card" style="margin-top:0">
+        <div class="table-header">
+          <h3>User Found: ${data.username}</h3>
+          <button class="btn btn-success btn-sm" onclick="openWalletModal('${data.id}','${data.username}',${data.wallet ? parseFloat(data.wallet.balance).toFixed(2) : 0})">💰 Adjust Wallet</button>
+        </div>
+        <div style="padding:20px">
+          <div class="user-detail-grid">
+            <div class="detail-card"><div class="detail-label">App ID</div><div class="detail-value">${data.appId}</div></div>
+            <div class="detail-card"><div class="detail-label">Phone</div><div class="detail-value">${data.phone}</div></div>
+            <div class="detail-card"><div class="detail-label">Wallet Balance</div><div class="detail-value">₹${data.wallet ? parseFloat(data.wallet.balance).toFixed(2) : '0.00'}</div></div>
+            <div class="detail-card"><div class="detail-label">Referral Code</div><div class="detail-value">${data.referralCode}</div></div>
+            <div class="detail-card"><div class="detail-label">Joined</div><div class="detail-value">${new Date(data.createdAt).toLocaleString('en-IN')}</div></div>
+            <div class="detail-card"><div class="detail-label">Total Orders</div><div class="detail-value">${data.orders ? data.orders.length : 0}</div></div>
+          </div>
+          ${data.transactions && data.transactions.length ? `
+            <h4 style="margin:20px 0 12px;font-size:15px">Recent Transactions</h4>
+            <table>
+              <thead><tr><th>Type</th><th>Amount</th><th>Title</th><th>Date</th></tr></thead>
+              <tbody>${data.transactions.slice(0,10).map(t => `
+                <tr>
+                  <td><span class="badge ${t.type==='DEPOSIT'?'badge-success':t.type==='WITHDRAWAL'?'badge-danger':'badge-info'}">${t.type}</span></td>
+                  <td>₹${parseFloat(t.amount).toFixed(2)}</td>
+                  <td>${t.title}</td>
+                  <td>${new Date(t.createdAt).toLocaleDateString('en-IN')}</td>
+                </tr>`).join('')}
+              </tbody>
+            </table>` : ''}
+        </div>
+      </div>`;
+  }
+
+  // ── ORDERS ────────────────────────────────────────────────────────────────────
+  async function loadOrders(page = 1) {
+    document.getElementById('ordersTable').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    const data = await api(`/admin/orders?page=${page}`);
+    if (!data) return;
+    document.getElementById('ordersTable').innerHTML = `
+      <table>
+        <thead><tr><th>Order #</th><th>Amount</th><th>Status</th><th>User</th><th>Date</th></tr></thead>
+        <tbody>${data.orders.map(o => `
+          <tr>
+            <td><strong>${o.orderNumber}</strong></td>
+            <td>₹${parseFloat(o.amount).toFixed(2)}</td>
+            <td><span class="badge ${o.status==='COMPLETED'?'badge-success':o.status==='AVAILABLE'?'badge-info':o.status==='CANCELLED'?'badge-danger':'badge-warning'}">${o.status}</span></td>
+            <td>${o.user ? o.user.username : '—'}</td>
+            <td>${new Date(o.createdAt).toLocaleDateString('en-IN')}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>` + renderPagination(data.page, data.totalPages, 'loadOrders');
+  }
+
+  // ── TRANSACTIONS ──────────────────────────────────────────────────────────────
+  async function loadTransactions(page = 1) {
+    document.getElementById('transactionsTable').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    const data = await api(`/admin/transactions?page=${page}`);
+    if (!data) return;
+    document.getElementById('transactionsTable').innerHTML = `
+      <table>
+        <thead><tr><th>Type</th><th>Amount</th><th>Title</th><th>User</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>${data.transactions.map(t => `
+          <tr>
+            <td><span class="badge ${t.type==='DEPOSIT'?'badge-success':t.type==='WITHDRAWAL'?'badge-danger':'badge-info'}">${t.type}</span></td>
+            <td>₹${parseFloat(t.amount).toFixed(2)}</td>
+            <td>${t.title}</td>
+            <td>${t.user ? t.user.username : '—'}</td>
+            <td><span class="badge ${t.status==='SUCCESS'?'badge-success':'badge-danger'}">${t.status}</span></td>
+            <td>${new Date(t.createdAt).toLocaleDateString('en-IN')}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>` + renderPagination(data.page, data.totalPages, 'loadTransactions');
+  }
+
+  // ── WALLET MODAL ──────────────────────────────────────────────────────────────
+  function openWalletModal(userId, username, balance) {
+    currentWalletUserId = userId;
+    document.getElementById('walletModalInfo').textContent = `User: ${username} | Current Balance: ₹${balance}`;
+    document.getElementById('walletAmount').value = '';
+    document.getElementById('walletReason').value = '';
+    document.getElementById('walletAlert').className = 'alert';
+    document.getElementById('walletModal').classList.add('open');
+  }
+
+  function closeModal() { document.getElementById('walletModal').classList.remove('open'); }
+
+  async function submitWalletAdjust() {
+    const amount = parseFloat(document.getElementById('walletAmount').value);
+    const reason = document.getElementById('walletReason').value;
+    if (isNaN(amount) || amount === 0) return;
+    const data = await apiPost(`/admin/users/${currentWalletUserId}/wallet`, { amount, reason });
+    if (data.success) {
+      document.getElementById('walletAlert').className = 'alert alert-success show';
+      document.getElementById('walletAlert').textContent = `✅ Done! New Balance: ₹${parseFloat(data.newBalance).toFixed(2)}`;
+      setTimeout(closeModal, 1500);
+    } else {
+      document.getElementById('walletAlert').className = 'alert alert-error show';
+      document.getElementById('walletAlert').textContent = data.message || 'Error occurred';
+    }
+  }
+
+  // ── PAGINATION ─────────────────────────────────────────────────────────────────
+  function renderPagination(page, total, fn) {
+    if (total <= 1) return '';
+    let btns = `<button class="pag-btn" onclick="${fn}(${page-1})" ${page<=1?'disabled':''}>← Prev</button>`;
+    btns += `<span style="color:var(--muted);font-size:13px">Page ${page} of ${total}</span>`;
+    btns += `<button class="pag-btn" onclick="${fn}(${page+1})" ${page>=total?'disabled':''}>Next →</button>`;
+    return `<div class="pagination">${btns}</div>`;
+  }
+
+  // ── HELPERS ───────────────────────────────────────────────────────────────────
+  function showAlert(id, msg, type) {
+    const el = document.getElementById(id);
+    el.className = `alert alert-${type} show`;
+    el.textContent = msg;
+    setTimeout(() => el.classList.remove('show'), 4000);
+  }
+
+  // ── INIT ───────────────────────────────────────────────────────────────────────
+  if (adminToken) showAdmin();
+</script>
+</body>
+</html>

@@ -12,15 +12,28 @@ export type RootStackParamList = {
 
   // Detail Stack Screens
   Payment: { recipientName?: string; recipientAvatar?: string; initialAmount?: string };
-  OrderDetails: { transactionId: string };
+  OrderDetails: {
+    transactionId?: string;
+    orderId?: string;
+    orderNumber?: string;
+    amount?: number;
+    status?: string;
+    utrNumber?: string;
+    createdAt?: string;
+    payoutWallet?: string;
+    payoutAccount?: string;
+    payoutUpi?: string;
+  } | undefined;
   Settings: undefined;
   Tasks: undefined;
+  TransactionRecords: undefined;
 };
 
 export type MainTabParamList = {
   Home: undefined;
   Statistics: undefined;
   Wallet: undefined;
+  Tools: undefined;
   Team: undefined;
   Profile: undefined;
 };

@@ -15,6 +15,7 @@ import { OrderDetailsScreen } from '../screens/details/OrderDetailsScreen';
 import { SettingsScreen } from '../screens/details/SettingsScreen';
 
 import { TasksScreen } from '../screens/details/TasksScreen';
+import { TransactionRecordsScreen } from '../screens/details/TransactionRecordsScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -48,6 +49,7 @@ export const RootNavigator: React.FC = () => {
         <Stack.Screen name="OrderDetails" component={OrderDetailsScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="Tasks" component={TasksScreen} />
+        <Stack.Screen name="TransactionRecords" component={TransactionRecordsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -25,10 +25,10 @@ export class RegisterDto {
   })
   phone: string;
 
-  @IsNotEmpty({ message: 'OTP code is required' })
+  @IsNotEmpty({ message: 'Security Pin is required' })
   @IsString()
-  @Length(6, 6, { message: 'OTP code must be exactly 6 digits' })
-  otpCode: string;
+  @Length(6, 6, { message: 'Security Pin must be exactly 6 digits' })
+  securityPin: string;
 
   @IsOptional()
   @IsString()

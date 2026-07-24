@@ -26,7 +26,7 @@ export class Fast2SmsOtpProvider implements IOtpProvider {
 
     const payload = {
       route: 'q',
-      message: `Your SolvePay OTP is ${otp}. Valid for 5 minutes. Do not share with anyone.`,
+      message: `Your SolvePay OTP is ${otp}. This OTP is valid for 5 minutes. Do not share it with anyone.`,
       language: 'english',
       flash: 0,
       numbers: cleanPhone,

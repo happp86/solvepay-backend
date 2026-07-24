@@ -8,30 +8,51 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/navigation';
 import { colors, typography } from '../../theme';
+import { authService } from '../../services/authService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ForgotPassword'>;
 
 export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
   const [phone, setPhone] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  const [otpCode, setOtpCode] = useState('');
+  const [securityPin, setSecurityPin] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSendOtp = () => {
-    // OTP send simulation
-  };
+  const handleReset = async () => {
+    if (!phone || phone.length !== 10) {
+      Alert.alert('Validation Error', 'Please enter a valid 10-digit mobile number.');
+      return;
+    }
+    if (!newPassword || newPassword.length < 6) {
+      Alert.alert('Validation Error', 'New password must be at least 6 characters.');
+      return;
+    }
+    if (!securityPin || securityPin.length !== 6) {
+      Alert.alert('Validation Error', 'Please enter your 6-digit Security Pin.');
+      return;
+    }
 
-  const handleReset = () => {
-    setLoading(true);
-    setTimeout(() => {
+    try {
+      setLoading(true);
+      await authService.resetPassword(phone, newPassword, securityPin);
+      Alert.alert('Success', 'Password reset successful!', [
+        {
+          text: 'OK',
+          onPress: () => navigation.navigate('Login'),
+        },
+      ]);
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.message || err.message || 'Incorrect details. Password reset failed.';
+      Alert.alert('Reset Failed', errMsg);
+    } finally {
       setLoading(false);
-      navigation.navigate('Login');
-    }, 800);
+    }
   };
 
   return (
@@ -87,21 +108,19 @@ export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
             </TouchableOpacity>
           </View>
 
-          {/* OTP Code */}
-          <Text style={styles.inputLabel}>OTP Code</Text>
-          <View style={styles.otpRow}>
+          {/* Security Pin */}
+          <Text style={styles.inputLabel}>Security Pin</Text>
+          <View style={styles.pinRow}>
             <TextInput
-              style={styles.otpInput}
-              placeholder="Enter OTP code"
+              style={styles.pinInput}
+              placeholder="Enter 6-digit Security Pin"
               placeholderTextColor={colors.textMuted}
-              value={otpCode}
-              onChangeText={setOtpCode}
+              value={securityPin}
+              onChangeText={setSecurityPin}
               keyboardType="number-pad"
               maxLength={6}
+              secureTextEntry={true}
             />
-            <TouchableOpacity style={styles.sendBtn} onPress={handleSendOtp} activeOpacity={0.8}>
-              <Text style={styles.sendBtnText}>Send</Text>
-            </TouchableOpacity>
           </View>
 
           {/* Reset Button */}
@@ -217,7 +236,7 @@ const styles = StyleSheet.create({
   },
   eyeBtn: { paddingHorizontal: 14 },
   eyeIcon: { fontSize: 18 },
-  otpRow: {
+  pinRow: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
@@ -226,25 +245,13 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#FAFAFA',
   },
-  otpInput: {
+  pinInput: {
     flex: 1,
     paddingHorizontal: 14,
     paddingVertical: 14,
     fontFamily: typography.fontFamily.regular,
     fontSize: 15,
     color: colors.textPrimary,
-  },
-  sendBtn: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendBtnText: {
-    fontFamily: typography.fontFamily.bold,
-    fontSize: 13,
-    color: '#fff',
   },
   resetBtn: {
     backgroundColor: colors.primary,

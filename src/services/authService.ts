@@ -14,14 +14,14 @@ export const authService = {
     username: string;
     password: string;
     phone: string;
-    otpCode: string;
+    securityPin: string;
     inviteCode?: string;
   }) {
     const data = await apiClient.post('/auth/register', {
       username: params.username,
       password: params.password,
       phone: params.phone,
-      otpCode: params.otpCode,
+      securityPin: params.securityPin,
       inviteCode: params.inviteCode || undefined,
     });
     if (data.tokens) {
@@ -40,6 +40,29 @@ export const authService = {
     return data;
   },
 
+  async resetPassword(phone: string, newPassword: string, securityPin: string) {
+    return apiClient.post('/auth/reset-password', { phone, newPassword, securityPin });
+  },
+
+  // Fetch fresh user data from server and update local store
+  async refreshUser(): Promise<boolean> {
+    try {
+      const freshUser = await apiClient.get('/users/me');
+      if (freshUser && freshUser.id) {
+        await tokenStore.setUser(freshUser);
+        return true;
+      }
+      return false;
+    } catch (err: any) {
+      // 401 = user deleted by admin → force logout
+      if (err?.status === 401) {
+        await tokenStore.clear();
+        return false;
+      }
+      return false;
+    }
+  },
+
   async logout() {
     try {
       await apiClient.post('/auth/logout');
@@ -49,3 +72,4 @@ export const authService = {
     tokenStore.clear();
   },
 };
+

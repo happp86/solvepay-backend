@@ -46,4 +46,28 @@ export class UserController {
         : { balance: '0', totalEarned: '0' },
     };
   }
+
+  @Get('team')
+  async getMyTeam(@GetUser() user: User) {
+    const referrals = await this.prisma.referral.findMany({
+      where: { referrerId: user.id },
+      include: {
+        referredUser: {
+          select: {
+            id: true,
+            appId: true,
+            referralCode: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+
+    return referrals.map((r) => ({
+      id: r.referredUser.id,
+      appId: r.referredUser.appId,
+      referralCode: r.referredUser.referralCode,
+      createdAt: r.referredUser.createdAt,
+    }));
+  }
 }

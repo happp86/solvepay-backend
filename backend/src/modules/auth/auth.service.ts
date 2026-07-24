@@ -18,7 +18,7 @@ import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
-
+import { ResetPasswordDto } from './dto/reset-password.dto';
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -46,20 +46,18 @@ export class AuthService {
     // 1. Check if user already exists
     const existingUser = await this.userRepository.findByPhone(dto.phone);
     if (existingUser) {
-      throw new ConflictException('Phone number is already registered.');
+      throw new ConflictException('User already registered with this mobile number! Please log in instead.');
     }
 
-    // 2. OTP Verification Bypassed for development/testing
-    // await this.otpService.verifyOtp(dto.phone, dto.otpCode);
-
-    // 3. Hash Password
+    // 2. Hash Password and Security Pin
     const passwordHash = await bcrypt.hash(dto.password, 10);
+    const securityPinHash = await bcrypt.hash(dto.securityPin, 10);
 
-    // 4. Generate unique Referral Code and 6-Digit App ID
+    // 3. Generate unique Referral Code and 6-Digit App ID
     const referralCode = await this.generateUniqueReferralCode();
     const appId = await this.generateUniqueAppId();
 
-    // 5. Check referrer if invite code provided
+    // 4. Check referrer if invite code provided
     let referrerId: string | null = null;
     if (dto.inviteCode) {
       const referrer = await this.userRepository.findByReferralCode(dto.inviteCode);
@@ -68,7 +66,7 @@ export class AuthService {
       }
     }
 
-    // 6. Execute atomic transaction
+    // 5. Execute atomic transaction
     const user = await this.prisma.$transaction(async (tx) => {
       const createdUser = await this.userRepository.createUser(
         {
@@ -76,6 +74,7 @@ export class AuthService {
           username: dto.username,
           phone: dto.phone,
           passwordHash,
+          securityPin: securityPinHash,
           referralCode,
         },
         tx,
@@ -274,6 +273,30 @@ export class AuthService {
         return code;
       }
     }
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    const user = await this.userRepository.findByPhone(dto.phone);
+    if (!user) {
+      throw new NotFoundException('User with this mobile number does not exist.');
+    }
+
+    // Verify security pin
+    const isPinValid = await bcrypt.compare(dto.securityPin, user.securityPin);
+    if (!isPinValid) {
+      throw new UnauthorizedException('Incorrect Security Pin! Password reset failed.');
+    }
+
+    // Hash new password
+    const newPasswordHash = await bcrypt.hash(dto.newPassword, 10);
+
+    // Update user password
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: newPasswordHash },
+    });
+
+    return { success: true, message: 'Password reset successful. Please login with your new password.' };
   }
 
   private sanitizeUser(user: any) {

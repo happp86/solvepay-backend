@@ -21,31 +21,15 @@ const serviceItems = [
     subtitle: 'Telegram Official Channel',
     icon: '✈️',
     color: '#2CA5E0',
-    url: 'https://t.me/solvepay',
+    url: 'https://t.me/+n9OKOUSBVKUzYzQ1',
   },
   {
     id: '2',
-    title: 'Whatsapp Official Channel',
-    subtitle: 'Whatsapp Official Channel',
-    icon: '💬',
-    color: '#25D366',
-    url: 'https://wa.me/919999999999',
-  },
-  {
-    id: '3',
-    title: 'Telegram Discussion Group',
-    subtitle: 'Teleragm Online Customer Service',
-    icon: '✈️',
-    color: '#2CA5E0',
-    url: 'https://t.me/solvepay_support',
-  },
-  {
-    id: '4',
     title: '24/7 Online Customer Service',
     subtitle: 'Online Customer Service',
     icon: '🎧',
     color: '#18C964',
-    url: '',
+    url: 'https://t.me/SolvePay_App',
   },
 ];
 

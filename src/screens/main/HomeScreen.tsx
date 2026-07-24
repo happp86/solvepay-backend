@@ -1,39 +1,69 @@
-import React from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  RefreshControl,
+  Alert,
+  Clipboard,
 } from 'react-native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { CompositeScreenProps } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainTabParamList, RootStackParamList } from '../../types/navigation';
 import { colors, typography } from '../../theme';
-
 import { tokenStore } from '../../services/tokenStore';
+import { authService } from '../../services/authService';
+import { apiClient } from '../../services/apiClient';
+import { COMMISSION_RATE } from '../../config/commission';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Home'>,
   NativeStackScreenProps<RootStackParamList>
 >;
 
-const mockTransactions = [
-  { id: '1', type: 'Deposit', amount: 188.0, time: '10:32 AM', status: 'Completed' },
-  { id: '2', type: 'Deposit', amount: 240.0, time: '09:15 AM', status: 'Completed' },
-  { id: '3', type: 'Deposit', amount: 500.0, time: 'Yesterday', status: 'Completed' },
-  { id: '4', type: 'Deposit', amount: 120.0, time: 'Yesterday', status: 'Completed' },
-];
-
-import Clipboard from '@react-native-clipboard/clipboard';
-import { Alert } from 'react-native';
-
 export const HomeScreen: React.FC<Props> = ({ navigation }) => {
+  const [refreshing, setRefreshing] = useState(false);
+  const [userOrders, setUserOrders] = useState<any[]>([]);
+  const [, forceUpdate] = useState(0);
+
+  const loadUserOrders = useCallback(async () => {
+    try {
+      const res = await apiClient.get('/orders/my-orders');
+      if (Array.isArray(res)) {
+        setUserOrders(res);
+      }
+    } catch {
+      // Ignore error
+    }
+  }, []);
+
+  useEffect(() => {
+    loadUserOrders();
+  }, [loadUserOrders]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    const success = await authService.refreshUser();
+    if (!success) {
+      const token = tokenStore.getAccessToken();
+      if (!token) {
+        (navigation as any).reset({ index: 0, routes: [{ name: 'Auth' }] });
+        return;
+      }
+    }
+    await loadUserOrders();
+    forceUpdate((n) => n + 1);
+    setRefreshing(false);
+  }, [navigation, loadUserOrders]);
+
   const user = tokenStore.getUser();
   const userName = user?.username || 'User';
   const displayAppId = user?.appId || user?.referralCode || '100001';
   const balance = user?.wallet?.balance ? parseFloat(user.wallet.balance).toFixed(2) : '0.00';
+  const totalDeposit = (user as any)?.totalDeposit ? parseFloat((user as any).totalDeposit).toFixed(2) : '0.00';
 
   const handleCopyAppId = () => {
     Clipboard.setString(displayAppId);
@@ -41,14 +71,28 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const quickActions = [
-    { icon: '₮', label: 'USDT', onPress: () => navigation.navigate('Wallet') },
+    { icon: '₹', label: 'INR', onPress: () => navigation.navigate('Wallet') },
     { icon: '📋', label: 'Task', onPress: () => navigation.navigate('Tasks') },
     { icon: '👥', label: 'Team', onPress: () => navigation.navigate('Team') },
     { icon: '📦', label: 'Order', onPress: () => navigation.navigate('Statistics') },
   ];
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={[colors.primary]}
+          tintColor={colors.primary}
+          title="Refreshing..."
+          titleColor={colors.textSecondary}
+        />
+      }
+    >
       {/* Top Bar */}
       <View style={styles.topBar}>
         <View style={styles.userInfoRow}>
@@ -76,7 +120,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
         <View style={styles.balanceCardContent}>
           <View style={styles.balanceLeft}>
             <Text style={styles.cashbackLabel}>Cashback</Text>
-            <Text style={styles.cashbackRate}>3.5%</Text>
+            <Text style={styles.cashbackRate}>{COMMISSION_RATE}%</Text>
 
             {/* Balance Box */}
             <View style={styles.miniBox}>
@@ -105,7 +149,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
             {/* Reward & Pending */}
             <View style={styles.miniBox}>
               <Text style={styles.miniBoxLabel}>Reward</Text>
-              <Text style={styles.miniBoxAmount}>₹0.00</Text>
+              <Text style={styles.miniBoxAmount}>+₹3.00</Text>
             </View>
             <View style={[styles.miniBox, { marginTop: 8 }]}>
               <Text style={styles.miniBoxLabel}>Pending</Text>
@@ -121,7 +165,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.statIcon}>⬆️</Text>
           <View>
             <Text style={styles.statLabel}>Total Deposit</Text>
-            <Text style={styles.statValue}>₹1,048.00</Text>
+            <Text style={styles.statValue}>₹{totalDeposit}</Text>
           </View>
         </View>
         <View style={styles.statDivider} />
@@ -170,26 +214,65 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
       <View style={styles.txSection}>
         <Text style={styles.sectionTitle}>Recent Transactions</Text>
         <View style={styles.txCard}>
-          {mockTransactions.map((tx) => (
-            <TouchableOpacity
-              key={tx.id}
-              style={styles.txRow}
-              onPress={() => navigation.navigate('OrderDetails', { transactionId: tx.id })}
-              activeOpacity={0.7}
-            >
-              <View style={styles.txIconBg}>
-                <Text style={styles.txIcon}>⬇️</Text>
-              </View>
-              <View style={styles.txInfo}>
-                <Text style={styles.txType}>Deposit INR</Text>
-                <Text style={styles.txTime}>{tx.time}</Text>
-              </View>
-              <View style={styles.txRight}>
-                <Text style={styles.txAmount}>+₹{tx.amount.toFixed(2)}</Text>
-                <Text style={styles.txStatus}>{tx.status}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
+          {userOrders.length === 0 ? (
+            <View style={{ paddingVertical: 24, alignItems: 'center' }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
+                No recent transactions yet. Claim an order to get started!
+              </Text>
+            </View>
+          ) : (
+            userOrders.map((ord) => {
+              const formattedAmount = parseFloat(ord.amount || 0).toFixed(2);
+              const dateStr = ord.createdAt
+                ? new Date(ord.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                : 'Recent';
+
+              let statusLabel = 'Pending';
+              let statusColor = '#F59E0B';
+              if (ord.status === 'COMPLETED') {
+                statusLabel = 'Completed';
+                statusColor = '#00d4aa';
+              } else if (ord.status === 'CANCELLED') {
+                statusLabel = 'Cancelled';
+                statusColor = '#EF4444';
+              }
+
+              return (
+                <TouchableOpacity
+                  key={ord.id}
+                  style={styles.txRow}
+                  onPress={() => navigation.navigate('OrderDetails', {
+                    transactionId: ord.id,
+                    orderNumber: ord.orderNumber,
+                    amount: parseFloat(ord.amount),
+                    status: ord.status,
+                    utrNumber: ord.utrNumber,
+                    createdAt: ord.createdAt,
+                  })}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.txIconBg}>
+                    <Text style={styles.txIcon}>⬇️</Text>
+                  </View>
+                  <View style={styles.txInfo}>
+                    <Text style={styles.txType}>Deposit INR</Text>
+                    <Text style={styles.txTime}>{dateStr}</Text>
+                    {ord.utrNumber ? (
+                      <Text style={{ color: '#4f8ef7', fontSize: 11, fontWeight: '700', marginTop: 2 }}>
+                        UTR: {ord.utrNumber}
+                      </Text>
+                    ) : null}
+                  </View>
+                  <View style={styles.txRight}>
+                    <Text style={styles.txAmount}>+₹{formattedAmount}</Text>
+                    <Text style={[styles.txStatus, { color: statusColor }]}>
+                      {statusLabel}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })
+          )}
         </View>
       </View>
     </ScrollView>

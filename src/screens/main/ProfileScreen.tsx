@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
@@ -13,7 +14,6 @@ import { CompositeScreenProps } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainTabParamList, RootStackParamList } from '../../types/navigation';
 import { colors, typography } from '../../theme';
-
 import { tokenStore } from '../../services/tokenStore';
 import { authService } from '../../services/authService';
 
@@ -29,11 +29,13 @@ const menuSections = [
         icon: '📊',
         title: 'Transaction Records',
         subtitle: 'View all your transactions',
+        navigate: 'TransactionRecords' as const,
       },
       {
         icon: '🏦',
         title: 'Payment Tool',
         subtitle: 'Manage payment methods',
+        navigate: 'Tools' as const,
       },
     ],
   },
@@ -43,6 +45,7 @@ const menuSections = [
         icon: '📞',
         title: 'Service',
         subtitle: 'Contact support channels',
+        navigate: 'Settings' as const,
       },
       {
         icon: '👥',
@@ -55,6 +58,23 @@ const menuSections = [
 ];
 
 export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
+  const [refreshing, setRefreshing] = useState(false);
+  const [, forceUpdate] = useState(0);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    const success = await authService.refreshUser();
+    if (!success) {
+      const token = tokenStore.getAccessToken();
+      if (!token) {
+        navigation.getParent()?.reset({ index: 0, routes: [{ name: 'Splash' }] });
+        return;
+      }
+    }
+    forceUpdate((n) => n + 1);
+    setRefreshing(false);
+  }, [navigation]);
+
   const user = tokenStore.getUser();
   const userName = user?.username || 'User';
   const appId = user?.appId || '100001';
@@ -104,7 +124,18 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
         <Text style={styles.pageTitle}>My Profile</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
+      >
         {/* User Profile Card */}
         <View style={styles.profileCard}>
           <View style={styles.avatarCircle}>

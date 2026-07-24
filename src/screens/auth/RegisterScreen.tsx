@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -21,36 +21,10 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
-  const [otpCode, setOtpCode] = useState('');
+  const [securityPin, setSecurityPin] = useState('');
   const [inviteCode, setInviteCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [countdown, setCountdown] = useState(0);
-
-  useEffect(() => {
-    if (countdown <= 0) return;
-    const timer = setInterval(() => {
-      setCountdown((prev) => prev - 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [countdown]);
-
-  const handleSendOtp = async () => {
-    if (!phone || phone.length !== 10) {
-      Alert.alert('Validation Error', 'Please enter a valid 10-digit mobile number.');
-      return;
-    }
-    try {
-      setLoading(true);
-      const res = await authService.sendOtp(phone);
-      setCountdown(res.resendAfterSeconds || 30);
-      Alert.alert('OTP Sent', 'OTP code sent to your phone successfully.');
-    } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to send OTP.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleRegister = async () => {
     if (!userName || userName.trim().length < 3) {
@@ -65,13 +39,10 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
       Alert.alert('Validation Error', 'Please enter a valid 10-digit mobile number.');
       return;
     }
-    // OTP is optional/bypassed right now
-    /*
-    if (!otpCode || otpCode.length !== 6) {
-      Alert.alert('Validation Error', 'OTP code must be exactly 6 digits.');
+    if (!securityPin || securityPin.length !== 6) {
+      Alert.alert('Validation Error', 'Please enter a 6-digit Security Pin. Remember this pin — it is needed to reset your password if forgotten.');
       return;
     }
-    */
 
     try {
       setLoading(true);
@@ -79,7 +50,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
         username: userName,
         password,
         phone,
-        otpCode: otpCode || '000000',
+        securityPin,
         inviteCode,
       });
       Alert.alert('Success', 'Account registered successfully!', [
@@ -89,7 +60,8 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
         },
       ]);
     } catch (err: any) {
-      Alert.alert('Registration Failed', err.message || 'Something went wrong.');
+      const errMsg = err?.response?.data?.message || err.message || 'Something went wrong.';
+      Alert.alert('User Already Registered', errMsg);
     } finally {
       setLoading(false);
     }
@@ -157,29 +129,19 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
             />
           </View>
 
-          {/* OTP Code */}
-          <Text style={styles.inputLabel}>OTP Code</Text>
-          <View style={styles.otpRow}>
-            <TextInput
-              style={styles.otpInput}
-              placeholder="Enter OTP code"
-              placeholderTextColor={colors.textMuted}
-              value={otpCode}
-              onChangeText={setOtpCode}
-              keyboardType="number-pad"
-              maxLength={6}
-            />
-            <TouchableOpacity
-              style={[styles.sendBtn, (countdown > 0 || loading) && styles.sendBtnDisabled]}
-              onPress={handleSendOtp}
-              disabled={countdown > 0 || loading}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.sendBtnText}>
-                {countdown > 0 ? `${countdown}s` : 'Send'}
-              </Text>
-            </TouchableOpacity>
-          </View>
+          {/* Security Pin */}
+          <Text style={styles.inputLabel}>Security Pin (6-digit)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Create a 6-digit Security Pin"
+            placeholderTextColor={colors.textMuted}
+            value={securityPin}
+            onChangeText={(t) => setSecurityPin(t.replace(/[^0-9]/g, ''))}
+            keyboardType="number-pad"
+            maxLength={6}
+            secureTextEntry={true}
+          />
+          <Text style={styles.pinHint}>⚠️ Remember this Pin — used to reset forgotten password</Text>
 
           {/* Invite Code */}
           <Text style={styles.inputLabel}>Invite Code</Text>
@@ -318,38 +280,12 @@ const styles = StyleSheet.create({
   },
   eyeBtn: { paddingHorizontal: 14 },
   eyeIcon: { fontSize: 18 },
-  otpRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 10,
-    overflow: 'hidden',
-    backgroundColor: '#FAFAFA',
-  },
-  otpInput: {
-    flex: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+  pinHint: {
     fontFamily: typography.fontFamily.regular,
-    fontSize: 15,
-    color: colors.textPrimary,
-  },
-  sendBtn: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendBtnDisabled: {
-    backgroundColor: colors.textMuted,
-    opacity: 0.7,
-  },
-  sendBtnText: {
-    fontFamily: typography.fontFamily.bold,
-    fontSize: 13,
-    color: '#fff',
+    fontSize: 11,
+    color: '#E57C00',
+    marginTop: 5,
+    marginBottom: 2,
   },
   signUpBtn: {
     backgroundColor: colors.primary,

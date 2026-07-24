@@ -9,6 +9,7 @@ import { HomeScreen } from '../screens/main/HomeScreen';
 import { StatisticsScreen } from '../screens/main/StatisticsScreen';
 import { WalletScreen } from '../screens/main/WalletScreen';
 import { TeamScreen } from '../screens/main/TeamScreen';
+import { ToolsScreen } from '../screens/main/ToolsScreen';
 import { ProfileScreen } from '../screens/main/ProfileScreen';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -18,7 +19,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const tabs = [
     { name: 'Home', label: 'Home', icon: '🏠' },
     { name: 'Wallet', label: 'Payment', icon: '💳' },
-    { name: 'Team', label: '', icon: '💰', isCenter: true },
+    { name: 'Tools', label: '', icon: '💰', isCenter: true },
     { name: 'Statistics', label: 'Statistics', icon: '📊' },
     { name: 'Profile', label: 'My', icon: '👤' },
   ];
@@ -84,6 +85,7 @@ export const TabNavigator: React.FC = () => {
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Wallet" component={WalletScreen} />
+      <Tab.Screen name="Tools" component={ToolsScreen} />
       <Tab.Screen name="Team" component={TeamScreen} />
       <Tab.Screen name="Statistics" component={StatisticsScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
