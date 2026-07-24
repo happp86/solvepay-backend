@@ -65,17 +65,7 @@ model Wallet {
   @@map("wallets")
 }
 
-model OtpCode {
-  id        String   @id @default(uuid())
-  phone     String
-  code      String
-  expiresAt DateTime @map("expires_at")
-  isUsed    Boolean  @default(false) @map("is_used")
-  createdAt DateTime @default(now()) @map("created_at")
 
-  @@index([phone, isUsed, expiresAt])
-  @@map("otp_codes")
-}
 
 model RefreshToken {
   id        String   @id @default(uuid())
